@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فيصل الجهني | المعرض التقني</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030712;
+            --accent: #818cf8;
+            --ease: cubic-bezier(0.16, 1, 0.3, 1);
+            --text: #fff;
+            --text-sub: #cbd5e1;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --border: rgba(255, 255, 255, 0.1);
+            --card-bg: rgba(15, 23, 42, 0.85);
+            --item-bg: rgba(255, 255, 255, 0.04);
+            --item-hover: rgba(255, 255, 255, 0.08);
+            --modal-bg: #0b1222;
+            --overlay: rgba(2, 6, 15, 0.82);
+        }
+        html.light {
+            --text: #0f172a;
+            --text-sub: #334155;
+            --text-muted: #475569;
+            --text-dim: #64748b;
+            --border: rgba(15, 23, 42, 0.12);
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --item-bg: rgba(15, 23, 42, 0.04);
+            --item-hover: rgba(15, 23, 42, 0.08);
+            --modal-bg: #ffffff;
+            --overlay: rgba(15, 23, 42, 0.45);
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: auto; }
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Tajawal', system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+            transition: background-color 0.8s ease, color 0.5s ease;
+        }
+        body.locked { overflow: hidden; }
+
+        #bg-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .glow {
+            position: fixed;
+            width: 900px;
+            height: 900px;
+            top: -450px;
+            right: -350px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--accent) 0%, transparent 65%);
+            opacity: 0.13;
+            z-index: 0;
+            pointer-events: none;
+        }
+        html.light .glow { opacity: 0.18; }
+        html.lite #bg-canvas, html.lite .glow { display: none; }
+
+        .progress {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--accent);
+            transform-origin: right;
+            transform: scaleX(0);
+            z-index: 300;
+        }
+
+        .top-controls {
+            position: fixed;
+            top: 22px;
+            left: 22px;
+            z-index: 500;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .top-nav {
+            position: fixed;
+            top: 22px;
+            right: 28px;
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px;
+            border-radius: 50px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            transition: background-color 0.4s, border-color 0.4s;
+        }
+        .top-nav button {
+            padding: 10px 18px;
+            border-radius: 50px;
+            border: 0;
+            background: transparent;
+            color: var(--text-sub);
+            font: inherit;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .top-nav button:hover {
+            color: var(--text);
+            background: var(--item-hover);
+        }
+        .top-nav button.active {
+            background: var(--accent);
+            color: #fff;
+        }
+        .icon-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            font-size: 1.25rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            transition: border-color 0.3s, background-color 0.4s, transform 0.3s var(--ease);
+        }
+        .icon-btn:hover { border-color: var(--accent); transform: scale(1.05); }
+        .menu-btn span {
+            display: block;
+            width: 20px;
+            height: 2px;
+            border-radius: 2px;
+            background: var(--text);
+            transition: transform 0.4s var(--ease), opacity 0.3s, background-color 0.3s;
+        }
+        .menu-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .menu-btn.open span:nth-child(2) { opacity: 0; }
+        .menu-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        .menu {
+            position: fixed;
+            top: 86px;
+            left: 22px;
+            z-index: 500;
+            min-width: 220px;
+            padding: 10px;
+            border-radius: 18px;
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.4s var(--ease), background-color 0.4s;
+        }
+        .menu.open { opacity: 1; transform: none; pointer-events: auto; }
+        .menu button {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 14px 16px;
+            border: 0;
+            border-radius: 12px;
+            background: transparent;
+            color: var(--text);
+            font: inherit;
+            font-size: 1.05rem;
+            font-weight: 700;
+            text-align: right;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .menu button:hover { background: var(--item-hover); }
+        .menu button i { font-style: normal; width: 22px; text-align: center; }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 600;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: var(--overlay);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal.open { opacity: 1; pointer-events: auto; }
+        .modal-card {
+            position: relative;
+            width: min(480px, 100%);
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 36px 30px 30px;
+            border-radius: 22px;
+            background: var(--modal-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+            transform: translateY(20px);
+            transition: transform 0.4s var(--ease), background-color 0.4s;
+        }
+        .modal.open .modal-card { transform: none; }
+        .modal-card h3 { margin: 0 0 14px; font-size: 1.7rem; font-weight: 900; }
+        .modal-card p { margin: 0 0 12px; color: var(--text-sub); line-height: 1.9; }
+        .modal-close {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 0;
+            background: var(--item-hover);
+            color: var(--text);
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+        .contact-list { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: var(--item-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            text-decoration: none;
+            transition: background 0.2s, border-color 0.2s, transform 0.2s;
+        }
+        .contact-item:hover { background: var(--item-hover); border-color: var(--accent); transform: translateX(-3px); }
+        .contact-item svg { width: 22px; height: 22px; flex-shrink: 0; fill: currentColor; }
+        .contact-item div { flex: 1; min-width: 0; }
+        .contact-item small { display: block; color: var(--text-dim); font-size: 0.8rem; }
+        .contact-item strong { display: block; direction: ltr; text-align: right; overflow: hidden; text-overflow: ellipsis; }
+        .copy-btn {
+            border: 0;
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: var(--item-hover);
+            color: var(--text-sub);
+            font: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .hero-contact {
+            width: min(440px, 100%);
+            padding: 28px;
+            border-radius: 22px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.28);
+            text-align: right;
+            transition: background-color 0.4s, border-color 0.4s;
+        }
+        .hero-contact h3 {
+            margin: 0 0 6px;
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--text);
+        }
+        .hero-contact > p {
+            margin: 0 0 14px !important;
+            font-size: 0.95rem !important;
+            color: var(--text-muted) !important;
+        }
+
+        .dots {
+            position: fixed;
+            left: 36px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .dot {
+            position: relative;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 1px solid var(--text-dim);
+            background: transparent;
+            cursor: pointer;
+            padding: 0;
+            transition: transform 0.4s var(--ease), background 0.4s;
+        }
+        .dot.active { background: var(--accent); border-color: var(--accent); transform: scale(1.5); }
+        .dot span {
+            position: absolute;
+            left: 22px;
+            top: 50%;
+            transform: translateY(-50%);
+            white-space: nowrap;
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .dot:hover span { opacity: 1; }
+
+        .panel {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 110px 8vw;
+            overflow: hidden;
+        }
+        .panel-inner {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 6vw;
+            align-items: center;
+        }
+        .big-num {
+            position: absolute;
+            left: 3vw;
+            bottom: -4vw;
+            font-family: system-ui, sans-serif;
+            font-size: 26vw;
+            font-weight: 900;
+            line-height: 1;
+            color: color-mix(in srgb, var(--c) 8%, transparent);
+            pointer-events: none;
+            user-select: none;
+            z-index: -1;
+        }
+        .panel + .panel::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 8vw;
+            left: 8vw;
+            height: 1px;
+            background: linear-gradient(to left, transparent, var(--border), transparent);
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--c);
+            background: color-mix(in srgb, var(--c) 12%, transparent);
+            border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
+            margin-bottom: 26px;
+        }
+        .tag::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--c);
+        }
+        .panel h2 {
+            font-size: clamp(2.2rem, 4.6vw, 4.2rem);
+            line-height: 1.3;
+            font-weight: 900;
+            margin: 0 0 24px 0;
+        }
+        .panel h2 .hl { color: var(--c); }
+        .panel p.lead {
+            color: var(--text-sub);
+            font-size: clamp(1.05rem, 1.3vw, 1.25rem);
+            line-height: 1.9;
+            margin: 0 0 34px 0;
+            max-width: 560px;
+        }
+        .meta { display: flex; gap: 36px; margin-bottom: 38px; flex-wrap: wrap; }
+        .meta div small { display: block; color: var(--text-dim); font-size: 0.8rem; margin-bottom: 4px; }
+        .meta div strong { font-size: 1.05rem; color: var(--text); }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 30px;
+            border-radius: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            color: #fff;
+            background: var(--c2);
+            transition: transform 0.3s var(--ease), opacity 0.3s;
+        }
+        .btn-action:hover { transform: translateY(-3px); opacity: 0.9; }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.9s var(--ease), transform 1s var(--ease);
+            transition-delay: calc(var(--d, 0) * 100ms);
+        }
+        .panel.in .reveal { opacity: 1; transform: none; }
+
+        .visual { display: flex; justify-content: center; align-items: center; perspective: 1200px; }
+
+        .hero .panel-inner { grid-template-columns: 1.15fr 1fr; text-align: right; }
+        .hero h1 {
+            font-size: clamp(3rem, 7vw, 6.2rem);
+            font-weight: 900;
+            margin: 0 0 16px 0;
+            padding: 0.1em 0 0.22em;
+            line-height: 1.35;
+            background: linear-gradient(120deg, #38bdf8, #6366f1, #a855f7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero .info p {
+            font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+            color: var(--text-muted);
+            max-width: 580px;
+            margin: 0;
+            line-height: 1.9;
+        }
+        .scroll-hint {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
+        .mouse { width: 24px; height: 38px; border: 2px solid var(--text-dim); border-radius: 14px; position: relative; }
+        .mouse::after {
+            content: "";
+            position: absolute;
+            top: 7px;
+            left: 50%;
+            width: 4px;
+            height: 8px;
+            margin-left: -2px;
+            border-radius: 2px;
+            background: var(--text-muted);
+            animation: wheel 1.8s infinite;
+        }
+        @keyframes wheel {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(12px); }
+        }
+
+        .tilt {
+            position: relative;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            transition: transform 0.6s var(--ease);
+        }
+        .tilt.hovering { transition: transform 0.15s linear; }
+
+        .cert {
+            position: relative;
+            width: min(440px, 100%);
+            aspect-ratio: 1.4;
+            border-radius: 20px;
+            padding: 34px;
+            background: linear-gradient(145deg, #12234a, #0b1222);
+            border: 1px solid rgba(96, 165, 250, 0.35);
+            color: #fff;
+            overflow: hidden;
+        }
+        html.light .cert {
+            background: linear-gradient(145deg, #eff6ff, #dbeafe);
+            border-color: rgba(37, 99, 235, 0.3);
+            color: #0f172a;
+            box-shadow: 0 25px 50px -15px rgba(37, 99, 235, 0.2);
+        }
+        .cert .logo { font-family: system-ui; font-weight: 900; font-size: 1.8rem; letter-spacing: 4px; color: #60a5fa; }
+        html.light .cert .logo { color: #2563eb; }
+        .cert .line { height: 8px; border-radius: 4px; background: rgba(148, 163, 184, 0.25); margin-top: 14px; }
+        .cert .name { margin-top: 26px; font-weight: 800; font-size: 1.15rem; }
+        .cert .seal {
+            position: absolute;
+            left: 30px;
+            bottom: 30px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px dashed #60a5fa;
+            display: grid;
+            place-items: center;
+            font-size: 1.7rem;
+        }
+
+        .model {
+            position: relative;
+            width: min(520px, 100%);
+            aspect-ratio: 1.15;
+            border-radius: 20px;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 40%, #3a1d0c, #0a0604);
+            border: 1px solid rgba(251, 146, 60, 0.4);
+        }
+        .model iframe { width: 100%; height: 100%; display: block; border: 0; }
+        .model-load {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            border: 0;
+            background: transparent;
+            color: #fed7aa;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .model-load .play {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 2rem;
+            background: #f97316;
+            color: #fff;
+            transition: transform 0.3s var(--ease);
+        }
+        .model-load:hover .play { transform: scale(1.08); }
+        .model-load small { color: #cbd5e1; font-weight: 400; }
+
+        .term {
+            position: relative;
+            width: min(480px, 100%);
+            border-radius: 16px;
+            overflow: hidden;
+            background: #0a0a0a;
+            border: 1px solid rgba(103, 232, 249, 0.3);
+            direction: ltr;
+            text-align: left;
+            box-shadow: 0 25px 50px -15px rgba(0, 0, 0, 0.35);
+        }
+        .term-bar { display: flex; gap: 7px; padding: 14px 16px; background: #141618; }
+        .term-bar i { width: 11px; height: 11px; border-radius: 50%; }
+        .term pre {
+            margin: 0;
+            padding: 22px;
+            min-height: 230px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.92rem;
+            line-height: 1.8;
+            color: #67e8f9;
+            white-space: pre-wrap;
+        }
+        .term .ok { color: #4ade80; }
+        .caret { display: inline-block; width: 8px; height: 1.1em; background: #67e8f9; vertical-align: middle; animation: blink 1s steps(1) infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .game {
+            position: relative;
+            width: min(420px, 100%);
+            border-radius: 20px;
+            padding: 34px;
+            background: linear-gradient(145deg, #2a1245, #0e0718);
+            border: 1px solid rgba(192, 132, 252, 0.35);
+            text-align: center;
+        }
+        html.light .game {
+            background: linear-gradient(145deg, #f3e8ff, #ffffff);
+            border-color: rgba(147, 51, 234, 0.3);
+            box-shadow: 0 25px 50px -15px rgba(147, 51, 234, 0.15);
+        }
+        .game-icon { font-size: 4.5rem; }
+        .game ul { list-style: none; padding: 0; margin: 24px 0 0; text-align: right; }
+        .game li { padding: 12px 16px; margin-top: 10px; border-radius: 12px; background: var(--item-bg); color: var(--text-muted); }
+        .game li::before { content: "○  "; color: #a855f7; }
+        .game li.done { color: #e9d5ff; background: rgba(147, 51, 234, 0.18); }
+        html.light .game li.done { color: #6b21a8; background: rgba(147, 51, 234, 0.12); font-weight: 700; }
+        .game li.done::before { content: "✓  "; }
+
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            transition: background-color 0.4s;
+        }
+
+        @media (max-width: 860px) {
+            .panel { padding: 100px 24px; }
+            .panel-inner, .hero .panel-inner { grid-template-columns: 1fr; gap: 40px; text-align: center; }
+            .hero .info p { margin: 0 auto; }
+            .dots, .top-nav { display: none; }
+            .big-num { font-size: 50vw; bottom: auto; top: 10vh; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { transition: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glow"></div>
+    <canvas id="bg-canvas"></canvas>
+    <div class="progress"></div>
+    <nav class="dots"></nav>
+
+    <nav class="top-nav" id="topNav">
+        <button data-goto="0" class="active">الرئيسية</button>
+        <button data-goto="1">الشهادات</button>
+        <button data-goto="2">النمذجة 3D</button>
+        <button data-goto="3">المهارات</button>
+        <button data-goto="4">الاهتمامات</button>
+        <button data-open="about">عني</button>
+        <button data-open="contact">تواصل معي</button>
+    </nav>
+
+    <div class="top-controls">
+        <button class="icon-btn" id="themeBtn" aria-label="تغيير المظهر" title="تغيير المظهر">☀️</button>
+        <button class="icon-btn menu-btn" id="menuBtn" aria-label="القائمة"><span></span><span></span><span></span></button>
+    </div>
+
+    <div class="menu" id="menu">
+        <button data-open="about"><i>👤</i>عني</button>
+        <button data-goto="1"><i>🧭</i>خبراتي واهتماماتي</button>
+        <button data-open="contact"><i>✉️</i>تواصل معي</button>
+    </div>
+
+    <div class="modal" id="about">
+        <div class="modal-card">
+            <button class="modal-close" aria-label="إغلاق">✕</button>
+            <h3>عني</h3>
+            <p>أنا فيصل الجهني، طالب في جامعة الملك عبدالعزيز.</p>
+            <p>مهتم بالتقنية بشكل عام، وجربت النمذجة الثلاثية الأبعاد في Blender، وبديت أتعرف على تطوير تطبيقات الجوال، وأتعلم حالياً على محرك Unity لتطوير الألعاب.</p>
+            <p>هذا الموقع مساحتي اللي أوثّق فيها رحلتي المهنية والشخصية خطوة بخطوة.</p>
+        </div>
+    </div>
+
+    <div class="modal" id="contact">
+        <div class="modal-card">
+            <button class="modal-close" aria-label="إغلاق">✕</button>
+            <h3>تواصل معي</h3>
+            <p>يسعدني تواصلك عبر أي وسيلة من هذي:</p>
+            <div class="contact-list">
+                <a class="contact-item" href="mailto:faisaljh39@gmail.com">
+                    <svg viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4.2-8 5-8-5V6l8 5 8-5z"/></svg>
+                    <div><small>الإيميل</small><strong>faisaljh39@gmail.com</strong></div>
+                    <button class="copy-btn" data-copy="faisaljh39@gmail.com">نسخ</button>
+                </a>
+                <a class="contact-item" href="https://x.com/f92jh2" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24"><path d="M18.9 2H22l-7.5 8.6L23 22h-6.8l-5.3-6.9L4.8 22H1.7l8-9.2L1 2h7l4.8 6.3zm-1.2 18h1.9L6.4 3.9H4.4z"/></svg>
+                    <div><small>X (تويتر)</small><strong>@f92jh2</strong></div>
+                </a>
+                <a class="contact-item" href="https://github.com/faisaroo" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.6 18.3 5 18.3 5c.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z"/></svg>
+                    <div><small>GitHub</small><strong>github.com/faisaroo</strong></div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <section class="panel hero in" data-bg="#030712" data-bg-light="#f8fafc" data-accent="#6366f1" data-label="البداية" style="--c:#6366f1;">
+        <div class="panel-inner">
+            <div class="info">
+                <h1 class="reveal">فيصل الجهني</h1>
+                <p class="reveal" style="--d:2">طالب في جامعة الملك عبدالعزيز. أستعرض هنا في الأسفل خبراتي واهتماماتي، وأوثّق رحلتي المهنية والشخصية خطوة بخطوة.</p>
+            </div>
+            <div class="visual reveal" style="--d:3" data-speed="-40">
+                <div class="hero-contact">
+                    <h3>تواصل معي</h3>
+                    <p>يسعدني تواصلك عبر أي وسيلة من هذي:</p>
+                    <div class="contact-list">
+                        <a class="contact-item" href="mailto:faisaljh39@gmail.com">
+                            <svg viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4.2-8 5-8-5V6l8 5 8-5z"/></svg>
+                            <div><small>الإيميل</small><strong>faisaljh39@gmail.com</strong></div>
+                            <button class="copy-btn" data-copy="faisaljh39@gmail.com">نسخ</button>
+                        </a>
+                        <a class="contact-item" href="https://x.com/f92jh2" target="_blank" rel="noopener">
+                            <svg viewBox="0 0 24 24"><path d="M18.9 2H22l-7.5 8.6L23 22h-6.8l-5.3-6.9L4.8 22H1.7l8-9.2L1 2h7l4.8 6.3zm-1.2 18h1.9L6.4 3.9H4.4z"/></svg>
+                            <div><small>X (تويتر)</small><strong>@f92jh2</strong></div>
+                        </a>
+                        <a class="contact-item" href="https://github.com/faisaroo" target="_blank" rel="noopener">
+                            <svg viewBox="0 0 24 24"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.6 18.3 5 18.3 5c.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z"/></svg>
+                            <div><small>GitHub</small><strong>github.com/faisaroo</strong></div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-hint">
+            <div class="mouse"></div>
+            <span>مرّر للأسفل</span>
+        </div>
+    </section>
+
+    <section class="panel" data-bg="#060b18" data-bg-light="#eff6ff" data-accent="#2563eb" data-label="شهادة IBM" style="--c:#3b82f6; --c2:#2563eb;">
+        <div class="big-num" data-speed="200">01</div>
+        <div class="panel-inner">
+            <div class="info">
+                <span class="tag reveal">شهادة معتمدة من IBM</span>
+                <h2 class="reveal" style="--d:1"><span class="hl">Python</span> for Data Science, AI &amp; Development</h2>
+                <p class="lead reveal" style="--d:2">إتمام البرنامج التدريبي واجتياز المشروع النهائي الموثق من IBM عبر Coursera باسم <strong>فيصل أحمد محمد الجهني</strong>.</p>
+                <div class="meta reveal" style="--d:3">
+                    <div><small>الجهة</small><strong>IBM · Coursera</strong></div>
+                    <div><small>التاريخ</small><strong>17 أغسطس 2026</strong></div>
+                </div>
+                <a href="https://www.coursera.org/account/accomplishments/verify/4OT6I02NBJ3S" target="_blank" rel="noopener" class="btn-action reveal" style="--d:4">التحقق من الشهادة الرسمية ↗</a>
+            </div>
+            <div class="visual reveal" style="--d:2" data-speed="-50">
+                <div class="cert">
+                    <div class="logo">IBM</div>
+                    <div class="name">Faisal Ahmed Mohammed Aljohani</div>
+                    <div class="line" style="width: 80%"></div>
+                    <div class="line" style="width: 60%"></div>
+                    <div class="line" style="width: 70%"></div>
+                    <div class="seal">📜</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel" data-bg="#140b06" data-bg-light="#fff7ed" data-accent="#f97316" data-label="Blender 3D" style="--c:#f97316; --c2:#ea580c;">
+        <div class="big-num" data-speed="200">02</div>
+        <div class="panel-inner">
+            <div class="info">
+                <span class="tag reveal">تطوير الألعاب والجرافيكس</span>
+                <h2 class="reveal" style="--d:1">نمذجة وتحريك <span class="hl">Blender 3D</span> &amp; Sketchfab</h2>
+                <p class="lead reveal" style="--d:2">تصميم ونمذجة أصول ثلاثية الأبعاد، إعداد الـ Rigging، والرفع لمنصة Sketchfab لتتيح التفاعل الكامل والدوران بـ 360 درجة.</p>
+                <div class="meta reveal" style="--d:3">
+                    <div><small>الأدوات</small><strong>Blender · Sketchfab</strong></div>
+                    <div><small>المهارات</small><strong>Modeling · Rigging · UV</strong></div>
+                </div>
+                <a href="https://sketchfab.com/3d-models/lab6-bakingggg-3f84c96e4d554e73aa567188dbd76a8f" target="_blank" rel="noopener" class="btn-action reveal" style="--d:4">استعراض نموذج Sketchfab ↗</a>
+            </div>
+            <div class="visual reveal" style="--d:2" data-speed="-50">
+                <div class="model" data-src="https://sketchfab.com/models/3f84c96e4d554e73aa567188dbd76a8f/embed?autostart=1&autospin=0.3&ui_theme=dark&ui_infos=0&ui_watermark_link=0&ui_hint=2&transparent=1">
+                    <button class="model-load">
+                        <span class="play">▶</span>
+                        <span>اضغط لعرض المودل ثلاثي الأبعاد</span>
+                        <small>تقدر تلفه وتتفاعل معه</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel" data-bg="#04121a" data-bg-light="#ecfeff" data-accent="#0891b2" data-label="Flutter" style="--c:#06b6d4; --c2:#0284c7;">
+        <div class="big-num" data-speed="200">03</div>
+        <div class="panel-inner">
+            <div class="info">
+                <span class="tag reveal">تطوير تطبيقات الجوال · بداية الطريق</span>
+                <h2 class="reveal" style="--d:1">أتعلم <span class="hl">Flutter</span></h2>
+                <p class="lead reveal" style="--d:2">بديت أتعرف على عالم تطبيقات الجوال، وعرفت إن Flutter يخليك تكتب كود واحد بلغة Dart يشتغل على Android و iOS بدل ما تتعلم لغة لكل نظام. لسا في البداية وأتعلم خطوة خطوة.</p>
+                <div class="meta reveal" style="--d:3">
+                    <div><small>المرحلة</small><strong>مبتدئ · أتعلم الأساسيات</strong></div>
+                    <div><small>الأدوات</small><strong>Flutter · Dart</strong></div>
+                </div>
+            </div>
+            <div class="visual reveal" style="--d:2" data-speed="-50">
+                <div class="term">
+                    <div class="term-bar">
+                        <i style="background:#ef4444"></i><i style="background:#eab308"></i><i style="background:#22c55e"></i>
+                    </div>
+                    <pre id="term"><span class="caret"></span></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel" data-bg="#0e0718" data-bg-light="#faf5ff" data-accent="#9333ea" data-label="تطوير الألعاب" style="--c:#a855f7; --c2:#9333ea;">
+        <div class="big-num" data-speed="200">04</div>
+        <div class="panel-inner">
+            <div class="info">
+                <span class="tag reveal">تطوير الألعاب · قيد التعلم</span>
+                <h2 class="reveal" style="--d:1">تطوير الألعاب بـ <span class="hl">Unity Engine</span></h2>
+                <p class="lead reveal" style="--d:2">قاعد أتعلم حالياً على محرك <strong>Unity Engine</strong>، وشغال مع صديقي على مشروع صغير للعبة بسيطة نطبّق فيها اللي نتعلمه خطوة بخطوة.</p>
+                <div class="meta reveal" style="--d:3">
+                    <div><small>المحرك</small><strong>Unity Engine · Blender</strong></div>
+                    <div><small>المشروع الحالي</small><strong>لعبة بسيطة (عمل مشترك مع صديق)</strong></div>
+                </div>
+            </div>
+            <div class="visual reveal" style="--d:2" data-speed="-50">
+                <div class="game">
+                    <div class="game-icon">🎮</div>
+                    <ul>
+                        <li class="done">نمذجة ثلاثية الأبعاد (Blender)</li>
+                        <li class="done">تعلم أساسيات Unity Engine</li>
+                        <li>تطوير لعبة بسيطة مع صديقي (شغالين عليها)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div style="height: 50px;"></div>
+
+    <div class="bottom-bar">
+        <span>© 2026 فيصل الجهني. جميع الحقوق محفوظة.</span>
+    </div>
+
+    <script>
+        const $ = (s, c = document) => c.querySelector(s);
+        const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+        const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+        const root = document.documentElement;
+        const progressBar = $('.progress');
+
+        const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const useSmooth = true;
+        const EASE = 0.085;
+        let lite = reduceMotion;
+        if (lite) root.classList.add('lite');
+
+        const panels = $$('.panel').map((el) => ({
+            el,
+            inner: $('.panel-inner', el),
+            movers: $$('[data-speed]', el).map((n) => ({ n, s: parseFloat(n.dataset.speed) })),
+            top: 0,
+            h: 0,
+            lastP: null
+        }));
+
+        let maxScroll = 0;
+        function measure() {
+            panels.forEach((p) => { p.top = p.el.offsetTop; p.h = p.el.offsetHeight; });
+            maxScroll = root.scrollHeight - innerHeight;
+        }
+        measure();
+        addEventListener('load', measure);
+        if (document.fonts) document.fonts.ready.then(measure);
+
+        let target = scrollY, current = scrollY, lastSet = scrollY;
+        let modalOpen = false;
+        let activeIndex = 0;
+        let lastWheelTime = 0, snapStartTime = 0, snapMode = false;
+
+        addEventListener('wheel', (e) => {
+            if (e.ctrlKey || modalOpen) return;
+            e.preventDefault();
+            let d = e.deltaY;
+            if (e.deltaMode === 1) d *= 40;
+            else if (e.deltaMode === 2) d *= innerHeight;
+
+            const now = performance.now();
+            const gap = now - lastWheelTime;
+            lastWheelTime = now;
+
+            if (!snapMode && gap > 220 && Math.abs(d) >= 4) {
+                const dir = d > 0 ? 1 : -1;
+                let idx = 0, minDist = Infinity;
+                panels.forEach((p, i) => {
+                    const dist = Math.abs(p.top - current);
+                    if (dist < minDist) { minDist = dist; idx = i; }
+                });
+                const curTop = panels[idx].top;
+                let nextIdx = idx;
+                if (dir > 0 && current < curTop - 80) nextIdx = idx;
+                else if (dir < 0 && current > curTop + 80) nextIdx = idx;
+                else nextIdx = clamp(idx + dir, 0, panels.length - 1);
+
+                target = clamp(panels[nextIdx].top, 0, maxScroll);
+                snapMode = true;
+                snapStartTime = now;
+            } else if (snapMode) {
+                const sinceSnap = now - snapStartTime;
+                if (sinceSnap > 90 && Math.abs(d) >= 35) {
+                    snapMode = false;
+                    target = clamp(current + d, 0, maxScroll);
+                }
+            } else {
+                target = clamp(target + d, 0, maxScroll);
+            }
+        }, { passive: false });
+
+        addEventListener('keydown', (e) => {
+            if (modalOpen || e.target.closest('input, textarea, [contenteditable]')) return;
+            if (e.key === 'ArrowDown' || e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey)) {
+                e.preventDefault();
+                goTo(clamp(activeIndex + 1, 0, panels.length - 1));
+            } else if (e.key === 'ArrowUp' || e.key === 'PageUp' || (e.key === ' ' && e.shiftKey)) {
+                e.preventDefault();
+                goTo(clamp(activeIndex - 1, 0, panels.length - 1));
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                goTo(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                goTo(panels.length - 1);
+            }
+        });
+
+        function goTo(i) {
+            const top = panels[i].top;
+            snapMode = true;
+            snapStartTime = performance.now();
+            target = clamp(top, 0, maxScroll);
+        }
+
+        const dotsNav = $('.dots');
+        const dots = panels.map((p, i) => {
+            const b = document.createElement('button');
+            b.className = 'dot';
+            b.innerHTML = `<span>${p.el.dataset.label}</span>`;
+            b.onclick = () => goTo(i);
+            dotsNav.appendChild(b);
+            return b;
+        });
+
+        const hexToRgb = (h) => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+        let particleTarget = hexToRgb('#6366f1');
+        let particleColor = [...particleTarget];
+
+        function applyThemeColors(i) {
+            const d = panels[i].el.dataset;
+            const isLight = root.classList.contains('light');
+            root.style.setProperty('--bg', isLight ? d.bgLight : d.bg);
+            root.style.setProperty('--accent', d.accent);
+            particleTarget = hexToRgb(d.accent);
+        }
+
+        const navBtns = $$('#topNav [data-goto]');
+        function setActive(i) {
+            if (i === activeIndex) return;
+            activeIndex = i;
+            applyThemeColors(i);
+            dots.forEach((dot, k) => dot.classList.toggle('active', k === i));
+            navBtns.forEach((btn) => btn.classList.toggle('active', +btn.dataset.goto === i));
+        }
+
+        const themeBtn = $('#themeBtn');
+        themeBtn.addEventListener('click', () => {
+            const isLight = root.classList.toggle('light');
+            themeBtn.textContent = isLight ? '🌙' : '☀️';
+            applyThemeColors(activeIndex);
+        });
+
+        let typed = false;
+        function typeTerminal() {
+            if (typed) return;
+            typed = true;
+            const el = $('#term');
+            const lines = [
+                ['$ flutter --version', ''],
+                ['Flutter • channel stable', 'ok'],
+                ['$ flutter create my_first_app', ''],
+                ['All done! Your app is ready.', 'ok'],
+                ['$ cd my_first_app', ''],
+                ['$ flutter run', ''],
+                ['Learning... one step at a time 🚀', 'ok']
+            ];
+            let html = '', li = 0, ci = 0;
+            (function step() {
+                if (li >= lines.length) { el.innerHTML = html + '<span class="caret"></span>'; return; }
+                const [text, cls] = lines[li];
+                if (cls) {
+                    html += `<span class="${cls}">${text}</span>\n`;
+                    li++;
+                    el.innerHTML = html + '<span class="caret"></span>';
+                    return setTimeout(step, 250);
+                }
+                ci++;
+                el.innerHTML = html + text.slice(0, ci) + '<span class="caret"></span>';
+                if (ci >= text.length) { html += text + '\n'; li++; ci = 0; return setTimeout(step, 400); }
+                setTimeout(step, 45);
+            })();
+        }
+
+        let lastRenderedY = -1;
+        function update(y) {
+            if (Math.abs(y - lastRenderedY) < 0.5) return;
+            lastRenderedY = y;
+            const vh = innerHeight;
+            progressBar.style.transform = `scaleX(${maxScroll > 0 ? y / maxScroll : 0})`;
+
+            let best = 0, bestDist = Infinity;
+            panels.forEach((p, i) => {
+                const raw = (p.top - y + p.h / 2 - vh / 2) / vh;
+                const ap = Math.abs(raw);
+                if (ap < bestDist) { bestDist = ap; best = i; }
+
+                if (ap < 0.45 && !p.el.classList.contains('in')) {
+                    p.el.classList.add('in');
+                    if ($('#term', p.el)) typeTerminal();
+                }
+
+                const pos = clamp(raw, -1.2, 1.2);
+                if (p.lastP !== null && Math.abs(pos) >= 1.2 && Math.abs(p.lastP) >= 1.2) return;
+                p.lastP = pos;
+
+                if (lite) {
+                    p.inner.style.transform = '';
+                    p.inner.style.opacity = '';
+                    return;
+                }
+                p.inner.style.transform = `translate3d(0, ${(pos * 60).toFixed(1)}px, 0)`;
+                p.inner.style.opacity = clamp(1.3 - ap * 1.4, 0, 1).toFixed(3);
+                p.movers.forEach((m) => { m.n.style.transform = `translate3d(0, ${(pos * m.s).toFixed(1)}px, 0)`; });
+            });
+            setActive(best);
+        }
+
+        const canvas = $('#bg-canvas');
+        const ctx = canvas.getContext('2d', { alpha: true });
+        const particles = [];
+        let mouse = { x: -1000, y: -1000 };
+
+        function buildParticles() {
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+            const count = Math.min(55, Math.round((innerWidth * innerHeight) / 25000));
+            particles.length = 0;
+            for (let i = 0; i < count; i++) {
+                const x = Math.random() * canvas.width, y = Math.random() * canvas.height;
+                particles.push({
+                    x, y, baseX: x, baseY: y,
+                    size: Math.random() * 1.6 + 1,
+                    depth: Math.random() * 0.4 + 0.15,
+                    vx: (Math.random() - 0.5) * 0.3,
+                    vy: (Math.random() - 0.5) * 0.3
+                });
+            }
+        }
+        buildParticles();
+        addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; }, { passive: true });
+
+        let lastParticleY = current;
+        function drawParticles() {
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            for (let k = 0; k < 3; k++) particleColor[k] += (particleTarget[k] - particleColor[k]) * 0.05;
+            ctx.fillStyle = `rgba(${particleColor[0] | 0}, ${particleColor[1] | 0}, ${particleColor[2] | 0}, 0.42)`;
+
+            const dy = current - lastParticleY;
+            lastParticleY = current;
+            const maxDist = 110, maxDist2 = maxDist * maxDist;
+
+            ctx.beginPath();
+            for (const p of particles) {
+                p.baseY -= dy * p.depth;
+                p.y -= dy * p.depth;
+                const mx = mouse.x - p.x, my = mouse.y - p.y;
+                const d2 = mx * mx + my * my;
+                if (d2 < maxDist2) {
+                    const dist = Math.sqrt(d2) || 1;
+                    const force = (maxDist - dist) / maxDist * 3;
+                    p.x -= (mx / dist) * force;
+                    p.y -= (my / dist) * force;
+                } else {
+                    p.x += (p.baseX - p.x) * 0.04;
+                    p.y += (p.baseY - p.y) * 0.04;
+                }
+                p.baseX += p.vx;
+                p.baseY += p.vy;
+                if (p.baseX < 0) { p.baseX += w; p.x = p.baseX; }
+                else if (p.baseX > w) { p.baseX -= w; p.x = p.baseX; }
+                if (p.baseY < 0) { p.baseY += h; p.y = p.baseY; }
+                else if (p.baseY > h) { p.baseY -= h; p.y = p.baseY; }
+                ctx.moveTo(p.x + p.size, p.y);
+                ctx.arc(p.x, p.y, p.size, 0, 6.2832);
+            }
+            ctx.fill();
+        }
+
+        let frameCount = 0, slowFrames = 0, lastTime = performance.now();
+        function checkPerformance(now) {
+            const dt = now - lastTime;
+            lastTime = now;
+            if (lite || frameCount > 180 || document.hidden) return;
+            frameCount++;
+            if (frameCount < 20) return;
+            if (dt > 28) slowFrames++;
+            if (frameCount === 180 && slowFrames > 60) {
+                lite = true;
+                root.classList.add('lite');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                lastRenderedY = -1;
+                panels.forEach((p) => { p.lastP = null; p.movers.forEach((m) => { m.n.style.transform = ''; }); });
+            }
+        }
+
+        function frame(now) {
+            checkPerformance(now);
+            if (useSmooth) {
+                if (Math.abs(scrollY - lastSet) > 2) target = current = scrollY;
+                const diff = target - current;
+                if (Math.abs(diff) > 0.4) {
+                    current += diff * EASE;
+                    scrollTo(0, current);
+                } else if (current !== target) {
+                    current = target;
+                    scrollTo(0, current);
+                }
+                lastSet = scrollY;
+            } else {
+                current = scrollY;
+            }
+            update(current);
+            if (!lite && !document.hidden) drawParticles();
+            requestAnimationFrame(frame);
+        }
+
+        let resizeTimer;
+        addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                measure();
+                buildParticles();
+                target = clamp(target, 0, maxScroll);
+                lastRenderedY = -1;
+                panels.forEach((p) => { p.lastP = null; });
+            }, 150);
+        });
+
+        const MAX_TILT = 12;
+        $$('.visual').forEach((visual) => {
+            const card = visual.firstElementChild;
+            const tilt = document.createElement('div');
+            tilt.className = 'tilt';
+            visual.insertBefore(tilt, card);
+            tilt.appendChild(card);
+            const zone = visual.closest('.panel');
+            let pending = false, ex = 0, ey = 0;
+
+            zone.addEventListener('mousemove', (e) => {
+                ex = e.clientX; ey = e.clientY;
+                if (pending) return;
+                pending = true;
+                requestAnimationFrame(() => {
+                    pending = false;
+                    const r = card.getBoundingClientRect();
+                    const nx = clamp((ex - (r.left + r.width / 2)) / (r.width / 2), -1.5, 1.5);
+                    const ny = clamp((ey - (r.top + r.height / 2)) / (r.height / 2), -1.5, 1.5);
+                    tilt.classList.add('hovering');
+                    tilt.style.transform = `rotateY(${(nx * MAX_TILT).toFixed(2)}deg) rotateX(${(-ny * MAX_TILT).toFixed(2)}deg)`;
+                });
+            }, { passive: true });
+            zone.addEventListener('mouseleave', () => {
+                tilt.classList.remove('hovering');
+                tilt.style.transform = '';
+            });
+        });
+
+        $$('.model').forEach((model) => {
+            $('.model-load', model).addEventListener('click', () => {
+                const iframe = document.createElement('iframe');
+                iframe.title = 'Lab6 Bakingggg';
+                iframe.src = model.dataset.src;
+                iframe.allow = 'autoplay; fullscreen; xr-spatial-tracking';
+                iframe.allowFullscreen = true;
+                model.innerHTML = '';
+                model.appendChild(iframe);
+            });
+        });
+
+        const menuBtn = $('#menuBtn');
+        const menu = $('#menu');
+        const toggleMenu = (open) => {
+            menuBtn.classList.toggle('open', open);
+            menu.classList.toggle('open', open);
+        };
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMenu(!menu.classList.contains('open'));
+        });
+        document.addEventListener('click', (e) => {
+            if (!menu.contains(e.target)) toggleMenu(false);
+        });
+
+        function openModal(id) {
+            toggleMenu(false);
+            $('#' + id).classList.add('open');
+            document.body.classList.add('locked');
+            modalOpen = true;
+        }
+        function closeModals() {
+            $$('.modal.open').forEach((m) => m.classList.remove('open'));
+            document.body.classList.remove('locked');
+            modalOpen = false;
+        }
+        $$('[data-open]').forEach((b) => b.addEventListener('click', () => openModal(b.dataset.open)));
+        $$('[data-goto]').forEach((b) => b.addEventListener('click', () => { toggleMenu(false); goTo(+b.dataset.goto); }));
+        $$('.modal').forEach((m) => m.addEventListener('click', (e) => {
+            if (e.target === m || e.target.closest('.modal-close')) closeModals();
+        }));
+        addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeModals(); toggleMenu(false); } });
+
+        $$('[data-copy]').forEach((b) => b.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            navigator.clipboard.writeText(b.dataset.copy).then(() => {
+                b.textContent = 'تم ✓';
+                setTimeout(() => { b.textContent = 'نسخ'; }, 1500);
+            });
+        }));
+
+        applyThemeColors(0);
+        dots[0].classList.add('active');
+        requestAnimationFrame(frame);
+    </script>
+</body>
+</html>
